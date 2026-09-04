@@ -135,7 +135,6 @@ def validate_input(data: pd.DataFrame) -> None:
 def calculate_daily_scores(data: pd.DataFrame) -> pd.DataFrame:
     result = data.copy()
 
-    # Temperature-only comparison.
     result["temperature_only_warning"] = (
         result["temperature_max_c"] >= 40.0
     )
@@ -206,7 +205,6 @@ def calculate_daily_scores(data: pd.DataFrame) -> pd.DataFrame:
         )
     )
 
-    # Comprehensive physiological hazard score.
     result["historical_thermal_hazard_score"] = (
         0.10 * result["temperature_only_score"]
         + 0.25 * result["wbgt_score"]
