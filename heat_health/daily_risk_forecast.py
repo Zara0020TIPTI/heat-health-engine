@@ -32,8 +32,6 @@ SUMMARY_JSON = Path(
     "output/delhi_risk_summary.json"
 )
 
-
-# Screening score breakpoints.
 HI_POINTS = (
     (20, 0),
     (27, 10),
@@ -67,9 +65,6 @@ def score_values(
     values: pd.Series,
     points: tuple[tuple[float, float], ...],
 ) -> np.ndarray:
-    """
-    Convert thermal-index values to scores between 0–100.
-    """
 
     numeric_values = pd.to_numeric(
         values,
@@ -103,9 +98,6 @@ def score_values(
 def classify_risk(
     score: float,
 ) -> tuple[str, str, str]:
-    """
-    Return risk level, alert code and map colour.
-    """
 
     if score >= 75:
         return (
@@ -138,9 +130,6 @@ def classify_risk(
 def advisory_for(
     risk_level: str,
 ) -> str:
-    """
-    Return an actionable public-health intervention.
-    """
 
     advisories = {
         "Low": (
@@ -175,9 +164,6 @@ def advisory_for(
 def consecutive_danger_days(
     values: pd.Series,
 ) -> pd.Series:
-    """
-    Count consecutive dangerous forecast days.
-    """
 
     running_count = 0
     result = []
@@ -205,13 +191,6 @@ def build_daily_risk_forecast(
     map_output: Path = PEAK_RISK_GEOJSON,
     summary_output: Path = SUMMARY_JSON,
 ) -> tuple[pd.DataFrame, gpd.GeoDataFrame]:
-    """
-    Build daily ward-level heat-health risk forecasts.
-    """
-
-    # -----------------------------------------------------
-    # Validate input files
-    # -----------------------------------------------------
 
     required_files = (
         hourly_path,
@@ -224,10 +203,6 @@ def build_daily_risk_forecast(
             raise FileNotFoundError(
                 f"Required input file not found: {path}"
             )
-
-    # -----------------------------------------------------
-    # Read inputs
-    # -----------------------------------------------------
 
     hourly = pd.read_csv(
         hourly_path,
@@ -300,10 +275,6 @@ def build_daily_risk_forecast(
             "Population input contains duplicate ward IDs."
         )
 
-    # -----------------------------------------------------
-    # Validate and prepare hourly data
-    # -----------------------------------------------------
-
     hourly["forecast_datetime_ist"] = pd.to_datetime(
         hourly["forecast_time_ist"],
         errors="coerce",
@@ -362,10 +333,6 @@ def build_daily_risk_forecast(
         .dt.hour
     )
 
-    # -----------------------------------------------------
-    # Calculate thermal hazard score
-    # -----------------------------------------------------
-
     hourly["heat_index_score"] = score_values(
         hourly["heat_index_c"],
         HI_POINTS,
@@ -397,10 +364,6 @@ def build_daily_risk_forecast(
         | (hourly["utci_c"] >= 46)
     )
 
-    # -----------------------------------------------------
-    # Confirm 24 hours exist for every ward/day
-    # -----------------------------------------------------
-
     group_columns = [
         "ward_id",
         "ward_name",
@@ -422,10 +385,6 @@ def build_daily_risk_forecast(
             "records. Invalid groups:\n"
             + invalid_groups.head(20).to_string()
         )
-
-    # -----------------------------------------------------
-    # Daily aggregation
-    # -----------------------------------------------------
 
     daily = hourly.groupby(
         group_columns,
@@ -503,10 +462,6 @@ def build_daily_risk_forecast(
         ),
     )
 
-    # -----------------------------------------------------
-    # Night-time temperature
-    # -----------------------------------------------------
-
     night_hours = hourly.loc[
         (hourly["forecast_hour"] <= 6)
         | (hourly["forecast_hour"] >= 22)
@@ -530,10 +485,6 @@ def build_daily_risk_forecast(
         validate="one_to_one",
     )
 
-    # -----------------------------------------------------
-    # Peak-risk forecast time
-    # -----------------------------------------------------
-
     peak_indices = hourly.groupby(
         group_columns,
         observed=True,
@@ -556,10 +507,6 @@ def build_daily_risk_forecast(
         how="left",
         validate="one_to_one",
     )
-
-    # -----------------------------------------------------
-    # Join population exposure
-    # -----------------------------------------------------
 
     population_columns = [
         "ward_id",
@@ -587,10 +534,6 @@ def build_daily_risk_forecast(
             "Population exposure is missing for wards: "
             f"{missing_ward_ids}"
         )
-
-    # -----------------------------------------------------
-    # Calculate duration and persistence
-    # -----------------------------------------------------
 
     daily = daily.sort_values(
         [
@@ -620,17 +563,6 @@ def build_daily_risk_forecast(
         * 100.0
     ).clip(0, 100)
 
-    # -----------------------------------------------------
-    # Provisional Mortality Risk Index
-    # -----------------------------------------------------
-    #
-    # Thermal hazard is the main factor.
-    # Population exposure and duration amplify that hazard.
-    #
-    # This remains an operational relative-risk index until
-    # calibrated using hospitalization or mortality labels.
-    # -----------------------------------------------------
-
     daily["mortality_risk_index"] = (
         daily["thermal_hazard_score"]
         * (
@@ -643,10 +575,6 @@ def build_daily_risk_forecast(
             / 100.0
         )
     ).clip(0, 100)
-
-    # -----------------------------------------------------
-    # Risk classifications
-    # -----------------------------------------------------
 
     classifications = daily[
         "mortality_risk_index"
@@ -667,10 +595,6 @@ def build_daily_risk_forecast(
     daily["recommended_action"] = daily[
         "risk_level"
     ].map(advisory_for)
-
-    # -----------------------------------------------------
-    # Automated administrative triggers
-    # -----------------------------------------------------
 
     alert_levels = [
         "High",
@@ -694,10 +618,6 @@ def build_daily_risk_forecast(
     daily["hospital_surge_alert"] = daily[
         "risk_level"
     ].isin(alert_levels)
-
-    # -----------------------------------------------------
-    # Transparency information
-    # -----------------------------------------------------
 
     daily["model_version"] = (
         "provisional-impact-risk-v2"
@@ -723,10 +643,6 @@ def build_daily_risk_forecast(
         numeric_output_columns
     ].round(2)
 
-    # -----------------------------------------------------
-    # Save daily CSV
-    # -----------------------------------------------------
-
     daily_output.parent.mkdir(
         parents=True,
         exist_ok=True,
@@ -746,10 +662,6 @@ def build_daily_risk_forecast(
         daily_output,
         index=False,
     )
-
-    # -----------------------------------------------------
-    # Create five-day peak-risk GIS map
-    # -----------------------------------------------------
 
     peak_row_indices = daily.groupby(
         "ward_id"
@@ -804,10 +716,6 @@ def build_daily_risk_forecast(
         driver="GeoJSON",
         index=False,
     )
-
-    # -----------------------------------------------------
-    # Create API/dashboard summary
-    # -----------------------------------------------------
 
     risk_level_order = [
         "Low",
