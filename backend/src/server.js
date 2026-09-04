@@ -77,8 +77,9 @@ const limiter = rateLimit({
 });
 
 
-app.disable("x-powered-by");
 
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
 app.use(helmet());
 
 app.use(
@@ -991,10 +992,10 @@ app.use((error, request, response, next) => {
 });
 
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
     console.log(
-        `Delhi Heat-Health API running at `
-        + `http://localhost:${PORT}`
+        `Delhi Heat-Health API running on `
+        + `0.0.0.0:${PORT}`
     );
 
     console.log(
