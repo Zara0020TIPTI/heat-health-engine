@@ -15,10 +15,6 @@ from rasterio.warp import (
 from shapely.geometry import mapping
 
 
-# ---------------------------------------------------------
-# File paths
-# ---------------------------------------------------------
-
 WARD_GEOJSON = Path(
     "data/processed/delhi_wards_processed.geojson"
 )
@@ -36,10 +32,6 @@ OUTPUT_GEOJSON = Path(
 )
 
 
-# ---------------------------------------------------------
-# Processing settings
-# ---------------------------------------------------------
-
 TARGET_CRS = "EPSG:32643"
 TARGET_RESOLUTION_METERS = 100
 
@@ -52,13 +44,6 @@ POPULATION_YEAR = 2020
 
 
 def robust_score(values: pd.Series) -> pd.Series:
-    """
-    Convert values into scores between 0 and 100.
-
-    The 5th and 95th percentiles are used to reduce the
-    influence of unusually small or large wards.
-    """
-
     numeric_values = pd.to_numeric(
         values,
         errors="coerce",
@@ -101,11 +86,6 @@ def build_delhi_density_grid(
     wards: gpd.GeoDataFrame,
     raster_path: Path,
 ) -> tuple[np.ndarray, rasterio.Affine]:
-    """
-    Crop the India WorldPop raster to Delhi and reproject
-    it to a 100-metre Delhi calculation grid.
-    """
-
     with rasterio.open(raster_path) as source:
         if source.crs is None:
             raise ValueError(
@@ -211,15 +191,6 @@ def calculate_population_exposure(
     output_csv: Path = OUTPUT_CSV,
     output_geojson: Path = OUTPUT_GEOJSON,
 ) -> gpd.GeoDataFrame:
-    """
-    Estimate population and population exposure for every
-    Delhi ward.
-    """
-
-    # -----------------------------------------------------
-    # Validate files
-    # -----------------------------------------------------
-
     if not ward_geojson.exists():
         raise FileNotFoundError(
             "Processed ward file not found: "
@@ -231,10 +202,6 @@ def calculate_population_exposure(
             "WorldPop raster not found: "
             f"{population_raster}"
         )
-
-    # -----------------------------------------------------
-    # Read ward polygons
-    # -----------------------------------------------------
 
     wards = gpd.read_file(ward_geojson)
 
@@ -273,10 +240,6 @@ def calculate_population_exposure(
         "Preparing WorldPop density grid for Delhi..."
     )
 
-    # -----------------------------------------------------
-    # Prepare population density grid
-    # -----------------------------------------------------
-
     (
         density_grid,
         density_transform,
@@ -296,10 +259,6 @@ def calculate_population_exposure(
 
     population_estimates = []
     valid_pixel_counts = []
-
-    # -----------------------------------------------------
-    # Calculate population inside every ward
-    # -----------------------------------------------------
 
     for ward_geometry in wards_projected.geometry:
         inside_ward = geometry_mask(
@@ -340,10 +299,6 @@ def calculate_population_exposure(
             valid_count
         )
 
-    # -----------------------------------------------------
-    # Create population features
-    # -----------------------------------------------------
-
     wards["population_estimate_2020"] = np.rint(
         population_estimates
     ).astype("int64")
@@ -360,10 +315,6 @@ def calculate_population_exposure(
         / ward_areas
     ).round(2)
 
-    # -----------------------------------------------------
-    # Create exposure scores
-    # -----------------------------------------------------
-
     wards["population_score"] = robust_score(
         wards["population_estimate_2020"]
     ).round(2)
@@ -374,17 +325,11 @@ def calculate_population_exposure(
         wards["population_density_per_sq_km"]
     ).round(2)
 
-    # Density is more important for heat exposure because
-    # it represents population concentration.
     wards["exposure_score"] = (
         0.40 * wards["population_score"]
         + 0.60
         * wards["population_density_score"]
     ).round(2)
-
-    # -----------------------------------------------------
-    # Add metadata
-    # -----------------------------------------------------
 
     wards[
         "population_raster_valid_pixels"
@@ -404,10 +349,6 @@ def calculate_population_exposure(
         "WorldPop 1km density reprojected to 100m; "
         "density integrated over ward area"
     )
-
-    # -----------------------------------------------------
-    # Final validation
-    # -----------------------------------------------------
 
     zero_population = (
         wards["population_estimate_2020"] <= 0
@@ -435,10 +376,6 @@ def calculate_population_exposure(
             "Exposure scores must remain between 0 and 100."
         )
 
-    # -----------------------------------------------------
-    # Save results
-    # -----------------------------------------------------
-
     output_geojson.parent.mkdir(
         parents=True,
         exist_ok=True,
@@ -461,10 +398,6 @@ def calculate_population_exposure(
         output_csv,
         index=False,
     )
-
-    # -----------------------------------------------------
-    # Print summary
-    # -----------------------------------------------------
 
     total_population = int(
         wards["population_estimate_2020"].sum()
