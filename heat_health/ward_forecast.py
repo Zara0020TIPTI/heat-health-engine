@@ -37,10 +37,6 @@ def create_batches(
     dataframe: pd.DataFrame,
     batch_size: int,
 ):
-    """
-    Divide ward locations into smaller API batches.
-    """
-
     for start in range(
         0,
         len(dataframe),
@@ -54,10 +50,6 @@ def create_batches(
 def fetch_batch(
     batch: pd.DataFrame,
 ) -> list[dict]:
-    """
-    Fetch hourly forecasts for one group of ward coordinates.
-    """
-
     latitude_values = ",".join(
         batch["centroid_lat"].map(
             lambda value: f"{value:.6f}"
@@ -169,10 +161,6 @@ def convert_response_to_rows(
     location_response: dict,
     generated_at_utc: str,
 ) -> list[dict]:
-    """
-    Convert one ward's API response into tabular rows.
-    """
-
     hourly_data = location_response.get(
         "hourly"
     )
@@ -276,10 +264,6 @@ def fetch_ward_forecasts(
     ward_locations: Path = WARD_LOCATIONS,
     output_csv: Path = OUTPUT_CSV,
 ) -> pd.DataFrame:
-    """
-    Fetch and save five-day hourly forecasts for every ward.
-    """
-
     if not ward_locations.exists():
         raise FileNotFoundError(
             f"Ward location file not found: "
