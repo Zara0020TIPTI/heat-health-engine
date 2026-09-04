@@ -1,5 +1,3 @@
-"""Validate the complete Delhi heat-health system before a demonstration."""
-
 from __future__ import annotations
 
 import argparse
