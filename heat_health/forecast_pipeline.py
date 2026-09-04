@@ -1,5 +1,3 @@
-"""Run the complete Delhi operational heat-health forecast pipeline."""
-
 from __future__ import annotations
 
 import argparse
@@ -80,14 +78,10 @@ PIPELINE_STEPS = [
 
 
 def utc_now() -> str:
-    """Return the current UTC time in ISO format."""
-
     return datetime.now(timezone.utc).isoformat()
 
 
 def validate_outputs(paths: list[Path]) -> None:
-    """Verify that a pipeline step created non-empty output files."""
-
     missing_files = [
         path
         for path in paths
@@ -107,8 +101,6 @@ def validate_outputs(paths: list[Path]) -> None:
 
 
 def run_module(module_name: str) -> None:
-    """Execute one project module using the active Python environment."""
-
     command = [
         sys.executable,
         "-m",
@@ -123,8 +115,6 @@ def run_module(module_name: str) -> None:
 
 
 def write_summary(summary: dict[str, Any]) -> None:
-    """Save a machine-readable pipeline execution summary."""
-
     OUTPUT_DIRECTORY.mkdir(
         parents=True,
         exist_ok=True,
@@ -141,8 +131,6 @@ def write_summary(summary: dict[str, Any]) -> None:
 
 
 def run_pipeline(skip_fetch: bool = False) -> None:
-    """Execute every operational forecast step in order."""
-
     pipeline_started = time.perf_counter()
 
     summary: dict[str, Any] = {
