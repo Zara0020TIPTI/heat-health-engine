@@ -8,10 +8,6 @@ from typing import Any
 import pandas as pd
 
 
-# ---------------------------------------------------------
-# File locations
-# ---------------------------------------------------------
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 INPUT_FILE = (
@@ -35,7 +31,6 @@ SUMMARY_FILE = (
 
 MODEL_VERSION = "evidence-calibrated-impact-risk-v3"
 
-# Published Indian multi-city study coefficients.
 TWO_DAY_RELATIVE_RISK = 1.147
 FIVE_DAY_EXTREME_RELATIVE_RISK = 1.332
 
@@ -68,13 +63,7 @@ NUMERIC_COLUMNS = [
 ]
 
 
-# ---------------------------------------------------------
-# Utility functions
-# ---------------------------------------------------------
-
 def to_bool(value: Any) -> bool:
-    """Safely convert CSV values into Boolean values."""
-
     if pd.isna(value):
         return False
 
@@ -110,25 +99,9 @@ def safe_int(value: Any, default: int = 0) -> int:
         return default
 
 
-# ---------------------------------------------------------
-# Evidence-based mortality calibration
-# ---------------------------------------------------------
-
 def calculate_evidence_calibration(
     row: pd.Series,
 ) -> pd.Series:
-    """
-    Calculate an evidence-based relative-risk coefficient.
-
-    Important:
-    The published coefficients were calculated at city level.
-    Because Delhi ward-level mortality labels are unavailable,
-    danger-day and thermal-stress conditions are used as operational
-    proxies.
-
-    The result is a relative-risk scenario, not a death-count forecast.
-    """
-
     danger_day = to_bool(row["danger_day"])
 
     duration = max(
@@ -144,7 +117,6 @@ def calculate_evidence_calibration(
     utci_max = safe_float(row["utci_max_c"])
     extreme_hours = safe_int(row["extreme_hours"])
 
-    # Operational definition of severe physiological heat.
     severe_heat = (
         wbgt_max >= 35.0
         or utci_max >= 46.0
@@ -152,7 +124,6 @@ def calculate_evidence_calibration(
         or thermal_score >= 85.0
     )
 
-    # Five-day severe heat proxy.
     if severe_heat and duration >= 5:
         relative_risk = FIVE_DAY_EXTREME_RELATIVE_RISK
         basis = (
@@ -161,8 +132,6 @@ def calculate_evidence_calibration(
         )
         evidence_type = "Published evidence proxy"
 
-    # Interpolate between the published two-day and
-    # five-day relative-risk values.
     elif severe_heat and duration in {3, 4}:
         increase_two_day = TWO_DAY_RELATIVE_RISK - 1.0
         increase_five_day = (
@@ -182,7 +151,6 @@ def calculate_evidence_calibration(
         )
         evidence_type = "Evidence interpolation"
 
-    # Published two-consecutive-day heatwave relationship.
     elif danger_day and duration >= 2:
         relative_risk = TWO_DAY_RELATIVE_RISK
         basis = (
@@ -191,8 +159,6 @@ def calculate_evidence_calibration(
         )
         evidence_type = "Published evidence proxy"
 
-    # A single severe day receives a conservative operational
-    # adjustment. This is not presented as a published coefficient.
     elif severe_heat:
         relative_risk = 1.10
         basis = (
@@ -201,7 +167,6 @@ def calculate_evidence_calibration(
         )
         evidence_type = "Provisional operational heuristic"
 
-    # A normal danger day receives a smaller adjustment.
     elif danger_day:
         relative_risk = 1.05
         basis = (
@@ -232,10 +197,6 @@ def calculate_evidence_calibration(
         }
     )
 
-
-# ---------------------------------------------------------
-# Risk classification and advisories
-# ---------------------------------------------------------
 
 def classify_calibrated_risk(score: float) -> str:
     if score < 25:
@@ -311,10 +272,6 @@ def alert_properties(level: str) -> dict[str, Any]:
     return properties[level]
 
 
-# ---------------------------------------------------------
-# Main processing pipeline
-# ---------------------------------------------------------
-
 def validate_input(data: pd.DataFrame) -> None:
     missing_columns = REQUIRED_COLUMNS - set(data.columns)
 
@@ -375,8 +332,6 @@ def build_calibrated_forecast() -> pd.DataFrame:
         axis=1,
     )
 
-    # Apply the evidence coefficient to the existing
-    # provisional 0-100 risk index.
     data["calibrated_mortality_risk_index"] = (
         data["mortality_risk_index"]
         * data["evidence_relative_risk"]
