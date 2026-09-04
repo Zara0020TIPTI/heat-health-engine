@@ -68,15 +68,6 @@ REQUIRED_FORECAST_COLUMNS = {
 
 
 def normalize_ward_id(value: Any) -> str:
-    """
-    Convert ward IDs into a consistent string format.
-
-    Examples:
-        1       -> "1"
-        1.0     -> "1"
-        "001"   -> "001"
-        "UNNUMBERED_001" -> "UNNUMBERED_001"
-    """
 
     if pd.isna(value):
         return ""
@@ -93,7 +84,6 @@ def normalize_ward_id(value: Any) -> str:
 
 
 def json_safe(value: Any) -> Any:
-    """Convert pandas/numpy values into JSON-compatible values."""
 
     if value is None:
         return None
@@ -153,10 +143,6 @@ def validate_forecast(data: pd.DataFrame) -> None:
 def select_peak_risk_rows(
     data: pd.DataFrame,
 ) -> pd.DataFrame:
-    """
-    Select the highest calibrated risk day for every ward.
-    """
-
     data = data.copy()
 
     data["_ward_key"] = data["ward_id"].apply(
@@ -189,14 +175,6 @@ def select_peak_risk_rows(
 def create_feature_properties(
     row: pd.Series,
 ) -> dict[str, Any]:
-    """
-    Create map properties using the calibrated peak-risk row.
-
-    Existing dashboard-compatible fields such as risk_level,
-    map_color and alert_code are updated to their calibrated values.
-    Original values are preserved with a base_ prefix.
-    """
-
     properties = {
         str(column): json_safe(value)
         for column, value in row.items()
