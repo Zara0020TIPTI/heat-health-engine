@@ -1,5 +1,3 @@
-"""Download hourly Delhi weather data from NASA POWER."""
-
 import argparse
 import json
 from pathlib import Path
@@ -14,12 +12,12 @@ NASA_POWER_URL = (
 )
 
 WEATHER_PARAMETERS = [
-    "T2M",                  # Temperature at 2 metres
-    "RH2M",                 # Relative humidity
-    "WS10M",                # Wind speed at 10 metres
-    "ALLSKY_SFC_SW_DWN",    # Solar radiation
-    "T2MDEW",               # Dew-point temperature
-    "PS",                   # Surface pressure
+    "T2M",
+    "RH2M",
+    "WS10M",
+    "ALLSKY_SFC_SW_DWN",
+    "T2MDEW",
+    "PS",
 ]
 
 
@@ -29,8 +27,6 @@ def download_nasa_weather(
     start_date: str,
     end_date: str,
 ) -> pd.DataFrame:
-    """Download and clean hourly weather data."""
-
     query_parameters = {
         "parameters": ",".join(WEATHER_PARAMETERS),
         "community": "RE",
@@ -96,7 +92,6 @@ def download_nasa_weather(
             f"NASA response is missing columns: {missing_columns}"
         )
 
-    # Convert weather columns into numeric values.
     for column in WEATHER_PARAMETERS:
         if column in weather.columns:
             weather[column] = pd.to_numeric(
@@ -104,13 +99,11 @@ def download_nasa_weather(
                 errors="coerce",
             )
 
-            # NASA uses values close to -999 for missing observations.
             weather.loc[
                 weather[column] <= -900,
                 column,
             ] = pd.NA
 
-    # NASA timestamp format: YYYYMMDDHH
     weather["timestamp_utc"] = pd.to_datetime(
         weather["timestamp_code"],
         format="%Y%m%d%H",
@@ -118,7 +111,6 @@ def download_nasa_weather(
         errors="coerce",
     )
 
-    # Convert UTC into Indian Standard Time.
     weather["timestamp_local"] = (
         weather["timestamp_utc"]
         .dt.tz_convert("Asia/Kolkata")
@@ -182,8 +174,6 @@ def save_weather_data(
     weather: pd.DataFrame,
     output_file: str,
 ) -> None:
-    """Save cleaned weather data as CSV."""
-
     output_path = Path(output_file)
 
     output_path.parent.mkdir(
