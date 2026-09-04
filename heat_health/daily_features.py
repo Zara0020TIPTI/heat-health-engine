@@ -1,5 +1,3 @@
-"""Generate daily heat-health features from hourly thermal data."""
-
 import argparse
 from pathlib import Path
 
@@ -20,7 +18,6 @@ REQUIRED_COLUMNS = [
 
 
 def validate_hourly_data(hourly: pd.DataFrame) -> None:
-    """Check whether required thermal columns exist."""
 
     missing_columns = [
         column
@@ -38,7 +35,6 @@ def classify_daily_heat_risk(
     wbgt_max: float,
     utci_max: float,
 ) -> str:
-    """Classify the maximum daily thermal risk."""
 
     if wbgt_max >= 33 or utci_max >= 46:
         return "Extreme"
@@ -55,7 +51,6 @@ def classify_daily_heat_risk(
 def calculate_consecutive_danger_days(
     dangerous_days: pd.Series,
 ) -> list[int]:
-    """Count consecutive high/extreme heat days."""
 
     consecutive_days = []
     running_count = 0
@@ -75,7 +70,6 @@ def generate_daily_features(
     input_file: str,
     output_file: str,
 ) -> pd.DataFrame:
-    """Aggregate hourly thermal observations into daily features."""
 
     print(f"Reading hourly data: {input_file}")
 
@@ -83,7 +77,6 @@ def generate_daily_features(
 
     validate_hourly_data(hourly)
 
-    # Parse timestamp and ensure it uses Indian Standard Time.
     hourly["timestamp_local"] = (
         pd.to_datetime(
             hourly["timestamp_local"],
@@ -101,7 +94,6 @@ def generate_daily_features(
     hourly["date"] = hourly["timestamp_local"].dt.date
     hourly["hour"] = hourly["timestamp_local"].dt.hour
 
-    # A dangerous hour occurs when either index enters a high-risk range.
     hourly["is_danger_hour"] = (
         (hourly["estimated_wbgt_c"] >= 31)
         | (hourly["utci_c"] >= 38)
@@ -112,7 +104,6 @@ def generate_daily_features(
         | (hourly["utci_c"] >= 46)
     )
 
-    # Nighttime is defined here as 10 PM through 6 AM.
     hourly["is_night_hour"] = (
         (hourly["hour"] >= 22)
         | (hourly["hour"] <= 6)
@@ -188,7 +179,6 @@ def generate_daily_features(
         )
     )
 
-    # Calculate minimum nighttime temperature separately.
     nighttime_data = hourly[
         hourly["is_night_hour"]
     ]
@@ -202,7 +192,6 @@ def generate_daily_features(
         daily["date"].map(nighttime_minimum)
     )
 
-    # UTC-to-IST conversion creates partial first and last dates.
     incomplete_days = daily[
         daily["hours_available"] != 24
     ]
@@ -241,7 +230,6 @@ def generate_daily_features(
         )
     )
 
-    # Lagged and rolling features for the future model.
     daily["previous_day_wbgt_c"] = (
         daily["wbgt_max_c"].shift(1)
     )
@@ -298,7 +286,6 @@ def generate_daily_features(
 def print_daily_summary(
     daily: pd.DataFrame,
 ) -> None:
-    """Display important daily results."""
 
     print("\nDaily heat-level distribution:")
 
