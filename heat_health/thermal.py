@@ -1,16 +1,3 @@
-"""Human thermal-stress calculation engine.
-
-The engine calculates:
-
-1. Heat Index
-2. Wet-bulb temperature
-3. Estimated globe temperature
-4. Estimated mean radiant temperature
-5. WBGT
-6. UTCI
-7. Overall thermal-stress level
-"""
-
 from math import atan, sqrt
 
 from pythermalcomfort.models import (
@@ -26,8 +13,6 @@ def validate_inputs(
     wind_speed: float,
     solar_radiation: float,
 ) -> None:
-    """Validate weather inputs before calculations."""
-
     if not -50 <= temperature_c <= 60:
         raise ValueError("Temperature must be between -50°C and 60°C")
 
@@ -45,8 +30,6 @@ def calculate_wet_bulb_temperature(
     temperature_c: float,
     humidity: float,
 ) -> float:
-    """Estimate wet-bulb temperature using the Stull approximation."""
-
     humidity = max(humidity, 0.1)
 
     wet_bulb = (
@@ -67,8 +50,6 @@ def convert_wind_height(
     wind_speed_10m: float,
     target_height: float = 1.1,
 ) -> float:
-    """Convert 10-metre wind speed to approximately human height."""
-
     return wind_speed_10m * (target_height / 10.0) ** 0.14
 
 
@@ -77,14 +58,6 @@ def estimate_globe_temperature(
     wind_speed_10m: float,
     solar_radiation: float,
 ) -> float:
-    """Estimate black-globe temperature.
-
-    Solar radiation raises globe temperature, while wind provides cooling.
-
-    This is a screening approximation, not a physical globe-thermometer
-    measurement.
-    """
-
     if solar_radiation <= 10:
         return temperature_c
 
@@ -96,7 +69,6 @@ def estimate_globe_temperature(
         / (1.0 + 0.5 * sqrt(max(wind_at_human_height, 0.1)))
     )
 
-    # Avoid physically unrealistic values from abnormal weather inputs.
     solar_temperature_gain = min(solar_temperature_gain, 25.0)
 
     return temperature_c + solar_temperature_gain
@@ -107,8 +79,6 @@ def estimate_mean_radiant_temperature(
     globe_temperature_c: float,
     wind_speed_10m: float,
 ) -> float:
-    """Estimate mean radiant temperature from globe temperature."""
-
     wind_at_human_height = max(
         convert_wind_height(wind_speed_10m),
         0.1,
@@ -137,8 +107,6 @@ def classify_thermal_stress(
     wbgt_c: float,
     utci_c: float,
 ) -> str:
-    """Classify overall human thermal stress."""
-
     if wbgt_c >= 33 or utci_c >= 46:
         return "Extreme"
 
@@ -157,8 +125,6 @@ def calculate_thermal_stress(
     wind_speed_10m: float,
     solar_radiation: float,
 ) -> dict:
-    """Calculate all thermal-stress indices for one weather observation."""
-
     validate_inputs(
         temperature_c,
         humidity,
@@ -166,7 +132,6 @@ def calculate_thermal_stress(
         solar_radiation,
     )
 
-    # 1. Heat Index
     heat_index_result = heat_index_rothfusz(
         tdb=temperature_c,
         rh=humidity,
@@ -176,27 +141,23 @@ def calculate_thermal_stress(
 
     heat_index_c = float(heat_index_result.hi)
 
-    # 2. Wet-bulb temperature
     wet_bulb_c = calculate_wet_bulb_temperature(
         temperature_c,
         humidity,
     )
 
-    # 3. Globe temperature
     globe_temperature_c = estimate_globe_temperature(
         temperature_c,
         wind_speed_10m,
         solar_radiation,
     )
 
-    # 4. Mean radiant temperature
     mean_radiant_temperature_c = estimate_mean_radiant_temperature(
         temperature_c,
         globe_temperature_c,
         wind_speed_10m,
     )
 
-    # 5. WBGT
     if solar_radiation > 10:
         wbgt_result = wbgt(
             twb=wet_bulb_c,
@@ -215,10 +176,8 @@ def calculate_thermal_stress(
 
     wbgt_c = float(wbgt_result.wbgt)
 
-    # UTCI requires wind speed at 10 metres.
     valid_utci_wind = min(max(wind_speed_10m, 0.5), 17.0)
 
-    # 6. UTCI
     utci_result = utci(
         tdb=temperature_c,
         tr=mean_radiant_temperature_c,
@@ -231,7 +190,6 @@ def calculate_thermal_stress(
     utci_c = float(utci_result.utci)
     utci_category = str(utci_result.stress_category)
 
-    # 7. Overall classification
     stress_level = classify_thermal_stress(
         wbgt_c,
         utci_c,
