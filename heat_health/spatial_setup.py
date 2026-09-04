@@ -4,10 +4,6 @@ import geopandas as gpd
 import pandas as pd
 
 
-# ---------------------------------------------------------
-# Input and output paths
-# ---------------------------------------------------------
-
 INPUT_GEOJSON = Path("data/delhi_wards.geojson")
 
 OUTPUT_DIRECTORY = Path("data/processed")
@@ -21,21 +17,12 @@ OUTPUT_CSV = (
 )
 
 
-# ---------------------------------------------------------
-# Dataset metadata
-# ---------------------------------------------------------
-
 DATASET_SOURCE = "https://bharatlas.com/view/wards_delhi"
 DATASET_LICENSE = "CC-BY-SA-4.0"
 DATASET_SNAPSHOT_DATE = "2026-05-26"
 
 
 def clean_text(value: object) -> str:
-    """
-    Convert missing values to an empty string and remove
-    unnecessary spaces from existing text values.
-    """
-
     if pd.isna(value):
         return ""
 
@@ -47,25 +34,13 @@ def prepare_delhi_wards(
     output_geojson: Path = OUTPUT_GEOJSON,
     output_csv: Path = OUTPUT_CSV,
 ) -> gpd.GeoDataFrame:
-    """
-    Read, validate and process Delhi ward boundaries.
-    """
-
     print(f"Reading Delhi ward boundaries: {input_path}")
-
-    # -----------------------------------------------------
-    # Check input file
-    # -----------------------------------------------------
 
     if not input_path.exists():
         raise FileNotFoundError(
             f"Boundary file not found: {input_path}\n"
             "Place delhi_wards.geojson inside the data folder."
         )
-
-    # -----------------------------------------------------
-    # Read GeoJSON
-    # -----------------------------------------------------
 
     wards = gpd.read_file(input_path)
 
@@ -75,10 +50,6 @@ def prepare_delhi_wards(
         raise ValueError(
             "The Delhi ward GeoJSON contains no records."
         )
-
-    # -----------------------------------------------------
-    # Validate required columns
-    # -----------------------------------------------------
 
     required_columns = {
         "Ward_No",
@@ -96,10 +67,6 @@ def prepare_delhi_wards(
             f"{sorted(missing_columns)}"
         )
 
-    # -----------------------------------------------------
-    # Validate geometry
-    # -----------------------------------------------------
-
     if wards.geometry.isna().any():
         raise ValueError(
             "Some ward records do not contain geometry."
@@ -112,10 +79,6 @@ def prepare_delhi_wards(
 
     wards = wards.copy()
 
-    # -----------------------------------------------------
-    # Clean ward IDs and ward names
-    # -----------------------------------------------------
-
     wards["Ward_No"] = wards["Ward_No"].map(
         clean_text
     )
@@ -123,10 +86,6 @@ def prepare_delhi_wards(
     wards["Ward_Name"] = wards["Ward_Name"].map(
         clean_text
     )
-
-    # -----------------------------------------------------
-    # Handle missing Ward_No
-    # -----------------------------------------------------
 
     missing_id_mask = wards["Ward_No"].eq("")
 
@@ -157,10 +116,6 @@ def prepare_delhi_wards(
                 f"Assigned internal ward ID: "
                 f"{generated_id}"
             )
-
-    # -----------------------------------------------------
-    # Handle missing Ward_Name
-    # -----------------------------------------------------
 
     missing_name_mask = wards["Ward_Name"].eq("")
 
@@ -194,20 +149,12 @@ def prepare_delhi_wards(
                 f"{generated_name}"
             )
 
-    # -----------------------------------------------------
-    # Rename columns to project-standard names
-    # -----------------------------------------------------
-
     wards = wards.rename(
         columns={
             "Ward_No": "ward_id",
             "Ward_Name": "ward_name",
         }
     )
-
-    # -----------------------------------------------------
-    # Confirm ward IDs are unique
-    # -----------------------------------------------------
 
     duplicate_id_mask = wards[
         "ward_id"
@@ -227,10 +174,6 @@ def prepare_delhi_wards(
             f"Duplicate ward IDs found: {duplicate_ids}"
         )
 
-    # -----------------------------------------------------
-    # Set coordinate reference system
-    # -----------------------------------------------------
-
     if wards.crs is None:
         print(
             "CRS missing. Treating coordinates as EPSG:4326."
@@ -240,10 +183,6 @@ def prepare_delhi_wards(
 
     else:
         wards = wards.to_crs(epsg=4326)
-
-    # -----------------------------------------------------
-    # Repair invalid geometries, if present
-    # -----------------------------------------------------
 
     invalid_geometry_mask = ~wards.geometry.is_valid
 
@@ -274,24 +213,12 @@ def prepare_delhi_wards(
             "Some geometries remain invalid after repair."
         )
 
-    # -----------------------------------------------------
-    # Calculate ward areas
-    # -----------------------------------------------------
-    # EPSG:32643 is UTM Zone 43N, suitable for Delhi.
-    # Geographic coordinates cannot calculate area correctly,
-    # so geometry is temporarily projected.
-    # -----------------------------------------------------
-
     projected_wards = wards.to_crs(epsg=32643)
 
     area_sq_km = (
         projected_wards.geometry.area
         / 1_000_000.0
     )
-
-    # -----------------------------------------------------
-    # Calculate ward centroids
-    # -----------------------------------------------------
 
     projected_centroids = (
         projected_wards.geometry.centroid
@@ -313,10 +240,6 @@ def prepare_delhi_wards(
         centroid_locations.x.round(6)
     )
 
-    # -----------------------------------------------------
-    # Add dataset provenance
-    # -----------------------------------------------------
-
     wards["data_source"] = DATASET_SOURCE
 
     wards["snapshot_date"] = (
@@ -324,10 +247,6 @@ def prepare_delhi_wards(
     )
 
     wards["license"] = DATASET_LICENSE
-
-    # -----------------------------------------------------
-    # Validate calculated output
-    # -----------------------------------------------------
 
     if wards["area_sq_km"].isna().any():
         raise ValueError(
@@ -348,10 +267,6 @@ def prepare_delhi_wards(
         raise ValueError(
             "Some centroid longitudes are missing."
         )
-
-    # -----------------------------------------------------
-    # Select final output columns
-    # -----------------------------------------------------
 
     output_columns = [
         "ward_id",
@@ -374,10 +289,6 @@ def prepare_delhi_wards(
         ]
     ).reset_index(drop=True)
 
-    # -----------------------------------------------------
-    # Create output directory
-    # -----------------------------------------------------
-
     output_geojson.parent.mkdir(
         parents=True,
         exist_ok=True,
@@ -388,19 +299,11 @@ def prepare_delhi_wards(
         exist_ok=True,
     )
 
-    # -----------------------------------------------------
-    # Save processed GeoJSON
-    # -----------------------------------------------------
-
     wards.to_file(
         output_geojson,
         driver="GeoJSON",
         index=False,
     )
-
-    # -----------------------------------------------------
-    # Save ward location CSV without geometry
-    # -----------------------------------------------------
 
     ward_locations = wards.drop(
         columns="geometry"
@@ -410,10 +313,6 @@ def prepare_delhi_wards(
         output_csv,
         index=False,
     )
-
-    # -----------------------------------------------------
-    # Print final results
-    # -----------------------------------------------------
 
     print()
     print(
