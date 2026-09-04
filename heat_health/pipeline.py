@@ -1,5 +1,3 @@
-"""Process hourly weather data through the thermal-stress engine."""
-
 import argparse
 from pathlib import Path
 
@@ -29,8 +27,6 @@ THERMAL_OUTPUT_COLUMNS = [
 
 
 def validate_weather_data(weather: pd.DataFrame) -> None:
-    """Check whether all required columns are present."""
-
     missing_columns = [
         column
         for column in REQUIRED_COLUMNS
@@ -47,8 +43,6 @@ def process_weather_data(
     input_file: str,
     output_file: str,
 ) -> pd.DataFrame:
-    """Calculate thermal indices for every hourly observation."""
-
     print(f"Reading: {input_file}")
 
     weather = pd.read_csv(input_file)
@@ -127,8 +121,6 @@ def process_weather_data(
 
 
 def print_summary(processed_weather: pd.DataFrame) -> None:
-    """Print a basic thermal-stress summary."""
-
     print("\nThermal-stress summary:")
 
     stress_counts = (
