@@ -1,5 +1,3 @@
-"""Combine thermal hazard and ward vulnerability into a risk index."""
-
 import argparse
 from pathlib import Path
 
@@ -28,8 +26,6 @@ def validate_columns(
     required_columns: list[str],
     dataset_name: str,
 ) -> None:
-    """Check whether a dataset contains all required columns."""
-
     missing_columns = [
         column
         for column in required_columns
@@ -47,8 +43,6 @@ def piecewise_score(
     value: float,
     breakpoints: list[tuple[float, float]],
 ) -> float:
-    """Convert an index value to a score using linear interpolation."""
-
     if value <= breakpoints[0][0]:
         return breakpoints[0][1]
 
@@ -75,8 +69,6 @@ def calculate_thermal_hazard_score(
     wbgt_c: float,
     utci_c: float,
 ) -> float:
-    """Convert Heat Index, WBGT and UTCI into a 0–100 score."""
-
     heat_index_score = piecewise_score(
         heat_index_c,
         [
@@ -129,8 +121,6 @@ def calculate_thermal_hazard_score(
 def calculate_duration_score(
     consecutive_danger_days: int,
 ) -> float:
-    """Convert consecutive dangerous days to a 0–100 score."""
-
     return round(
         min(
             consecutive_danger_days / 3 * 100,
@@ -141,8 +131,6 @@ def calculate_duration_score(
 
 
 def classify_risk(score: float) -> tuple[str, str]:
-    """Return risk level and colour."""
-
     if score >= 75:
         return "Extreme", "Red"
 
@@ -156,8 +144,6 @@ def classify_risk(score: float) -> tuple[str, str]:
 
 
 def get_advisory(risk_level: str) -> str:
-    """Return an automatic public-health recommendation."""
-
     advisories = {
         "Low": (
             "Continue monitoring and publish routine "
@@ -185,8 +171,6 @@ def calculate_ward_risk(
     ward_file: str,
     output_file: str,
 ) -> pd.DataFrame:
-    """Generate one heat-health risk record per ward per day."""
-
     print(f"Reading daily heat data: {daily_file}")
     daily = pd.read_csv(daily_file)
 
@@ -218,15 +202,12 @@ def calculate_ward_risk(
         "consecutive_danger_days"
     ].apply(calculate_duration_score)
 
-    # Combine every Delhi day with every Delhi ward.
     ward_daily_risk = daily.merge(
         wards,
         how="cross",
     )
 
     def calculate_single_risk(row: pd.Series) -> float:
-        """Calculate risk while ensuring heat hazard remains necessary."""
-
         vulnerability = (
             float(
                 row[
@@ -308,8 +289,6 @@ def calculate_ward_risk(
         .astype(int)
     )
 
-    # Important metadata prevents this score from being
-    # misrepresented as an exact death forecast.
     ward_daily_risk["model_version"] = (
         "provisional-rule-based-v1"
     )
@@ -355,8 +334,6 @@ def calculate_ward_risk(
 def print_summary(
     risk_data: pd.DataFrame,
 ) -> None:
-    """Print risk distribution and highest-risk records."""
-
     print("\nRisk-level distribution:")
 
     print(
