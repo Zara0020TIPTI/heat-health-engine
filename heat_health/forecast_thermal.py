@@ -57,10 +57,6 @@ def calculate_cached(
     wind_speed_10m_mps: float,
     solar_radiation_wm2: float,
 ) -> tuple:
-    """
-    Calculate thermal indices for one unique weather condition.
-    """
-
     result = calculate_thermal_stress(
         temperature_c=temperature_c,
         humidity=relative_humidity_pct,
@@ -95,10 +91,6 @@ def calculate_cached(
 def validate_input(
     forecast: pd.DataFrame,
 ) -> pd.DataFrame:
-    """
-    Validate the ward weather forecast.
-    """
-
     required_columns = {
         "ward_id",
         "ward_name",
@@ -179,10 +171,6 @@ def generate_thermal_forecast(
     input_csv: Path = INPUT_CSV,
     output_csv: Path = OUTPUT_CSV,
 ) -> pd.DataFrame:
-    """
-    Calculate hourly thermal indices for all Delhi wards.
-    """
-
     if not input_csv.exists():
         raise FileNotFoundError(
             f"Input forecast not found: {input_csv}"
