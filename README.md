@@ -1,4 +1,19 @@
-# Delhi Heat-Health Command Centre
+# ThermoAlert: Predict, Prioritize, Protect
+
+## 1. Project Information
+
+- **Project Title:** ThermoAlert: Predict, Prioritize, Protect
+- **Team Name:** SmartX
+- **PS ID:** 26083
+- **PS Title:** Extreme Heatwave Early Warning and Human Thermal Stress Index
+- **Category:** Software
+- **Theme:** Disaster Management
+
+## 2. Problem Statement
+
+Delhi's heatwaves put life-threatening stress on residents, but risk is not uniform across the city — it depends on ward-level weather, population density, and demographic vulnerability. Without hyper-local, forecast-driven visibility into who is most at risk and when, public health response (cooling centres, advisories, hospital preparedness) can't be targeted where it's needed most.
+
+## 3. Proposed Solution
 
 A geospatial early-warning system that forecasts heat-related health risk across all 290 of Delhi's wards. It fuses live weather forecasts, thermal-comfort science, ward-level demographic vulnerability, and population exposure into a calibrated Mortality Risk Index — then serves it through an API and an interactive GIS dashboard with a simulated alert-dispatch workflow.
 
@@ -6,29 +21,7 @@ A geospatial early-warning system that forecasts heat-related health risk across
 
 ![Dashboard overview — Delhi heat-health risk map](docs/screenshots/dashboard-overview.png)
 
-## How it works
-
-```mermaid
-flowchart TD
-    A[Open-Meteo<br/>5-day hourly forecast] --> E[Python Heat-Health Engine]
-    B[NASA POWER<br/>historical weather] --> E
-    C[Delhi ward boundaries<br/>290 wards, GeoJSON] --> E
-    D[WorldPop<br/>population raster] --> E
-
-    E --> F[Heat Index, WBGT, UTCI]
-    F --> G[Daily ward features<br/>hazard + duration + exposure + vulnerability]
-    G --> H[Base Mortality Risk Index]
-    H --> I[Calibrated against published<br/>India heat-mortality relative-risk]
-    I --> J[CSV / JSON / GeoJSON outputs]
-
-    J --> K[Node.js + Express API]
-    K --> L[React + Vite GIS Dashboard]
-    K --> M[Alert Simulation Engine]
-```
-
-**Deployment:** the Python pipeline runs offline and commits its outputs to `models/` and `output/`; the Express API is deployed on **Render** and the React dashboard on **Vercel**, both built from this GitHub repo.
-
-## Mortality Risk Index
+### Mortality Risk Index
 
 Each ward-day is scored 0–100 from four inputs — thermal hazard (HI/WBGT/UTCI), exposure (population and density), duration (consecutive dangerous days), and demographic vulnerability — then calibrated against a published India heat-mortality relative-risk coefficient.
 
@@ -43,18 +36,28 @@ Each ward-day is scored 0–100 from four inputs — thermal hazard (HI/WBGT/UTC
 
 High/Extreme wards flow into the alert engine, which simulates SMS/WhatsApp dispatch and writes an audit log (`output/alert_dispatch_log.jsonl`).
 
-## Architecture
+## 4. Key Features
 
-```
-data/                    Raw inputs — ward boundaries, population raster, demo demographics, sample weather
-heat_health/             Python pipeline (weather → thermal indices → risk → calibration → GIS outputs)
-models/                  Fitted mortality calibration model (JSON)
-output/                  Generated forecasts, risk maps, hotspots, and pipeline/summary reports
-backend/                 Express API serving the generated outputs
-frontend/                React + Vite dashboard (map, ward forecast charts, alert panel)
-tests/                   Pytest suite for the pipeline and calibration logic
-docs/screenshots/        Dashboard screenshots used in this README
-```
+- Ward-level (290 wards) heat-health risk forecasting, 5 days ahead
+- Thermal-stress calculation — Heat Index, WBGT, UTCI
+- Mortality Risk Index calibrated against published India heat-mortality relative-risk data
+- Population exposure modelling (WorldPop) and demographic vulnerability scoring
+- Historical backtest against the May 2024 Delhi heatwave
+- Interactive GIS dashboard — daily/5-day-peak risk map, ward risk distribution, highest-risk ward rankings
+- Simulated alert dispatch (SMS/WhatsApp) with an audit log
+
+## 5. Technology Stack
+
+- **Data/ML pipeline:** Python — `pandas`, `numpy`, `geopandas`, `rasterio`, `pythermalcomfort`
+- **Backend:** Node.js — `express`, `helmet`, `cors`, `express-rate-limit`, `morgan`, `csv-parse`
+- **Frontend:** React + Vite, Leaflet (map rendering)
+- **Tests:** `pytest`
+
+## 6. Architecture
+
+![Architecture diagram: data sources into the Python Heat-Health Engine, through thermal indices, ward features, and mortality-risk calibration, out to the Express API, React dashboard, and Alert Simulation Engine](docs/screenshots/architecture-diagram.png)
+
+**Deployment:** the Python pipeline runs offline and commits its outputs to `models/` and `output/`; the Express API is deployed on **Render** and the React dashboard on **Vercel**, both built from this GitHub repo.
 
 ### Pipeline stages (`heat_health/forecast_pipeline.py`)
 
@@ -70,31 +73,61 @@ This produces 290 wards × 5 days = **1,450 ward-day predictions** per run.
 
 Supporting modules: `spatial_setup.py` (clean/process raw ward GeoJSON), `population_exposure.py` (WorldPop raster ↔ ward intersection), `ward_vulnerability.py` (demographic scoring), `nasa_power.py` (historical weather download), `historical_backtest.py` (validates the model against the May 2024 Delhi heatwave — 30 days tested, published warnings compared day-by-day), `system_check.py` (end-to-end health check of the generated outputs).
 
-## Dashboard
+## 7. Repository Structure
+
+```
+heat-health-engine/
+├── README.md
+├── data/                    Raw inputs — ward boundaries, population raster, demo demographics, sample weather
+├── heat_health/             Python pipeline (weather → thermal indices → risk → calibration → GIS outputs)
+├── models/                  Fitted mortality calibration model (JSON)
+├── output/                  Generated forecasts, risk maps, hotspots, and pipeline/summary reports
+├── backend/                 Express API serving the generated outputs
+├── frontend/                React + Vite dashboard (map, ward forecast charts, alert panel)
+├── tests/                   Pytest suite for the pipeline and calibration logic
+└── docs/screenshots/        Dashboard screenshots used in this README
+```
+
+## 8. Final Presentation
+
+_TODO — add your final presentation, or a Google Drive/OneDrive link if it's too large for GitHub._
+
+## 9. Demo Video
+
+_TODO — add a demo video link (optional but recommended)._ In the meantime, the live app is available at https://heat-health-engine-five.vercel.app.
+
+## 10. Screenshots
 
 The **Delhi Heat-Health Command Centre** surfaces the pipeline output as a live GIS view — an overview with current max risk, wards monitored, forecast horizon, and model status; an interactive daily/5-day-peak risk map; a five-day ward risk distribution; historical validation against the May 2024 heatwave; and a ranked table of the highest-risk wards.
 
 ![Ward risk distribution and highest-risk wards table](docs/screenshots/dashboard-wards.png)
 
-## Tech stack
-
-- **Data/ML pipeline:** Python — `pandas`, `numpy`, `geopandas`, `rasterio`, `pythermalcomfort`
-- **Backend:** Node.js — `express`, `helmet`, `cors`, `express-rate-limit`, `morgan`, `csv-parse`
-- **Frontend:** React + Vite, Leaflet (map rendering)
-- **Tests:** `pytest`
-
-## Getting started
+## 11. Installation
 
 ### Prerequisites
 - Python 3.10+
 - Node.js 18+
 
-### 1. Set up the Python pipeline
+### Set up the Python pipeline
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Run the pipeline
+### Set up the backend
+```bash
+cd backend
+npm install
+```
+
+### Set up the frontend
+```bash
+cd frontend
+npm install
+```
+
+## 12. Run
+
+### Run the pipeline
 ```bash
 # One-off: process a static weather CSV into thermal indices
 python -m heat_health.pipeline --input data/delhi_weather_may_2024.csv --output output/delhi_hourly_thermal_indices.csv
@@ -109,10 +142,9 @@ python -m heat_health.forecast_pipeline --skip-fetch
 python -m heat_health.system_check
 ```
 
-### 3. Run the backend API
+### Run the backend API
 ```bash
 cd backend
-npm install
 npm run dev   # or: npm start
 ```
 The API reads directly from `models/` and `output/`, so run the pipeline at least once first. Configure `PORT` and `CORS_ORIGIN` via a `.env` file (see `.gitignore` — `.env` is not committed).
@@ -128,22 +160,29 @@ Key endpoints:
 - `GET /api/alerts/preview` — preview an alert for a ward/date
 - `POST /api/alerts/dispatch` — simulate dispatching an alert
 
-### 4. Run the frontend
+### Run the frontend
 ```bash
 cd frontend
-npm install
 npm run dev
 ```
 Set `VITE_API_BASE_URL` in a `.env` file if the backend isn't on the default local port.
 
-### 5. Run tests
+### Run tests
 ```bash
 pytest
 ```
 
-## Data sources
+## 13. Future Scope
+
+_TODO — describe realistic improvements or extensions (e.g. real-time mortality data integration, additional cities, mobile alerts)._
+
+## 14. Data Sources
 
 - Weather forecast: [Open-Meteo](https://open-meteo.com/)
 - Historical weather: [NASA POWER API](https://power.larc.nasa.gov/)
 - Ward boundaries: [Bharatlas Delhi wards dataset](https://bharatlas.com/view/wards_delhi) (CC-BY-SA-4.0)
 - Population: [WorldPop](https://hub.worldpop.org/geodata/summary?id=41746) 1km density raster, reprojected to 100m (CC-BY-4.0)
+
+## Important
+
+Before submission, make sure the repository is accessible to reviewers. Do **not** upload passwords, API keys, access tokens, `.env` files containing secrets, or other confidential credentials.
