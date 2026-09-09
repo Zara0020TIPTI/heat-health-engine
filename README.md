@@ -4,7 +4,7 @@
 
 - **Project Title:** ThermoAlert: Predict, Prioritize, Protect
 - **Team Name:** SmartX
-- **PS ID:** 26083
+- **PS ID:** SIH26083
 - **PS Title:** Extreme Heatwave Early Warning and Human Thermal Stress Index
 - **Category:** Software
 - **Theme:** Disaster Management
