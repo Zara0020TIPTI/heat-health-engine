@@ -8,7 +8,23 @@ A geospatial early-warning system that forecasts heat-related health risk across
 
 ## How it works
 
-![Architecture diagram: data sources into the Python Heat-Health Engine, through thermal indices, ward features, and mortality-risk calibration, out to the Express API, React dashboard, and Alert Simulation Engine](docs/screenshots/architecture-diagram.png)
+```mermaid
+flowchart TD
+    A[Open-Meteo<br/>5-day hourly forecast] --> E[Python Heat-Health Engine]
+    B[NASA POWER<br/>historical weather] --> E
+    C[Delhi ward boundaries<br/>290 wards, GeoJSON] --> E
+    D[WorldPop<br/>population raster] --> E
+
+    E --> F[Heat Index, WBGT, UTCI]
+    F --> G[Daily ward features<br/>hazard + duration + exposure + vulnerability]
+    G --> H[Base Mortality Risk Index]
+    H --> I[Calibrated against published<br/>India heat-mortality relative-risk]
+    I --> J[CSV / JSON / GeoJSON outputs]
+
+    J --> K[Node.js + Express API]
+    K --> L[React + Vite GIS Dashboard]
+    K --> M[Alert Simulation Engine]
+```
 
 **Deployment:** the Python pipeline runs offline and commits its outputs to `models/` and `output/`; the Express API is deployed on **Render** and the React dashboard on **Vercel**, both built from this GitHub repo.
 
