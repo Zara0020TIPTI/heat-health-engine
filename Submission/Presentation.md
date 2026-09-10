@@ -1,4 +1,5 @@
 # Project Presentation
+[SIH2026-ThermoAlert-Presentation-Format.pptx.pdf](https://github.com/user-attachments/files/32061228/SIH2026-ThermoAlert-Presentation-Format.pptx.pdf)
 
 ## External presentation link 
 
