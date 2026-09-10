@@ -94,8 +94,7 @@ _TODO — add your final presentation, or a Google Drive/OneDrive link if it's t
 
 ## 9. Demo Video
 
-Demo Video — https://drive.google.com/file/d/1zTgnlWV0EOGqCUApPbAxoy9urbClei26/view?usp=drivesdk _ In the meantime, the live app is available at https://heat-health-engine-five.vercel.app.
-
+Demo Video — https://drive.google.com/file/d/1zTgnlWV0EOGqCUApPbAxoy9urbClei26/view?usp=drivesdk 
 ## 10. Screenshots
 
 The **Delhi Heat-Health Command Centre** surfaces the pipeline output as a live GIS view — an overview with current max risk, wards monitored, forecast horizon, and model status; an interactive daily/5-day-peak risk map; a five-day ward risk distribution; historical validation against the May 2024 heatwave; and a ranked table of the highest-risk wards.
