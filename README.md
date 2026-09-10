@@ -90,7 +90,7 @@ heat-health-engine/
 
 ## 8. Final Presentation
 
-<https://drive.google.com/file/d/1hGJWu9BS4LiHL4HxTB49GuymJ7M9yr3H/view>
+PPT Link - <https://drive.google.com/file/d/1hGJWu9BS4LiHL4HxTB49GuymJ7M9yr3H/view>
 
 ## 9. Demo Video
 
