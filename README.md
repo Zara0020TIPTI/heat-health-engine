@@ -90,7 +90,7 @@ heat-health-engine/
 
 ## 8. Final Presentation
 
-_TODO — add your final presentation, or a Google Drive/OneDrive link if it's too large for GitHub._
+<https://drive.google.com/file/d/1hGJWu9BS4LiHL4HxTB49GuymJ7M9yr3H/view>
 
 ## 9. Demo Video
 
